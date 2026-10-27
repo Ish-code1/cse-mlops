@@ -5,3 +5,4 @@ uvicorn #(initiate server)
 pydantic #(validation testing instead of writing if-else)
 httpx
 pytest
+mlflow
