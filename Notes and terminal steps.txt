@@ -1,0 +1,124 @@
+13/10/2026
+==============================================
+Phase 1 : Build Foundation for mlops
+==============================================
+
+Step-1: Create Virtual env 
+python -m venv kiet-cse
+
+Step-2: Activate Virtual Envirionment
+kiet-cse\Scripts\activate
+
+Step-3: Create project structure
+mkdir mlops-first-pipeline
+cd mlops-first-pipeline
+
+FILES : main.py - fastapi 
+	train.py - training
+	requirements.txt
+	folder named models 
+	joblib file formed - SERIALIZATION -
+	file handling only supports text . any other data type - SERIALIZATION
+
+
+Step-4:Install required packages 
+
+requirements.txt - scikitlearn , joblib(files save and read),fastapi,uvicorn(initiate server),pydantic(validation testing instead of writing if-else)
+
+pip install -r requirements.txt
+
+
+Step-5: Model train
+python train.py
+
+Step-6: create and start fast api
+uvicorn main:app -reload
+
+https://localhost:8000/health
+
+FOR API testing use this data :
+{
+	"sepal_length": 5.1,
+    "sepal_width": 3.5,
+    "petal_length":1.6,
+    "petal_width":0.5
+}
+
+======================================
+Phase 2 Dockerize ML Application
+=====================================
+Traditional ML Flow:
+Dataset -> Train -> Model Evaluation -> Prediction
+
+Production Ready ML Application
+Saved Model -> Python App -> REST API ->Automated Test -> Docker Container -> CI/CD
+Can be tested, deployed , accessed by clients and maintained consistently
+
+Why we need Docker ?
+- Imagine right now ML application is working on your macbook, but fails on another engineer laptop that runs it on a Linux/windows server
+
+Possible reasons of failure:
+- Different Python Versions
+- Different versions of scikit-learn or FastAPI
+- Missing Python Packages
+- Different OS dependencies
+
+Docker helps package your application code, runtime, dependencies and startup instructions into a standardized image
+
+4 major requirements:
+- Dockerfile - Instructions for packaging the ML application
+- Image - packaged reusable application artifact
+- Container - Running instance of that image
+- Port mapping - Makes the API inside the container accessible from your system
+
+
+Command for Docker:
+1) docker ps - print all running containers
+2) docker ps -a = print all active/ non - active containers 
+3)docker build -t cse-mlops (-t = tag = name of image)
+$)docker images
+5)start the container:
+docker run -d --name iris-ml-api -p 8000:8000 cse-mlops
+
+====================================
+Phase-3: Automated Testing and CI/CD with GitHub Actions
+====================================
+
+What's our Goal ?
+Developer pushes code to GitHub
+GitHub actions start the workflow
+Triggered by a push or pull request
+
+Run tests:
+Validate model API behavior
+Build image
+Verify Docker Packaging
+
+
+What is CI/CD ?
+- CI - Continuous Integration: Automatically validates code changes through tests and build checks
+- CD - Continuous Delivery: Keeps changes ready for release, with production release potentially requiring approval
+- CD - Continuous Deployment - Automatically releases changes to production when all required checks pass
+
+
+Automated Testing
+- Automated testing catches issues before a change moves to production
+- Pytest + FastAPI Test Client + GitHub Actions
+
+Update the project structure
+- mlops-first-pipeline
+---- tests
+-------- test_api.py
+---- .github
+-------- workflows
+------------ ci.yml
+
+
+Now install two new packages:
+-httpx: fastapi TestClient uses HTTPx to simulate http request to your applicatiom
+-pytest: it discovers and runs automated tests, report failures , and returns bob-zero exit status when test fails 
+
+pip install httpx pytest
+
+Run Test Locally
+python -m pytest -v
