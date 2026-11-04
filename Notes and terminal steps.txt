@@ -126,3 +126,77 @@ python -m pytest -v
 
 Install mlflow
 pip install mlflow
+
+mlflow server \
+--backend-store-uri sqlite:///mlflow.db \
+--host 127.0.0.1 \   #running on local host 
+--port 7001
+
+
+Evaluate and promote model versions
+- We will add a validation gate that checks model quality before allowing a model version to be considered for deployment
+
+Promote a validated model using champion alias
+- Our FastAPI application loads a model from a local file
+- This works for demo purpose, but becomes harder to manage when you have multiple model versions
+
+- Instead of hardcoding a file path or version, we can assign the alias champion to the model version we want out application to use
+
+#2/11/26
+Containerize the MLFlow Connected API
+MLFlow server running on our machine
+Model Registry + model artifacts
+
+Docker network connection
+Docker container
+
+FastAPI -> Loads iris-classifier@champion
+Prediction API
+
+
+Make MLFlow accessible to Docker
+
+Restart mlflow with IP - 0.0.0.0
+
+mlflow server \
+--backend-store-uri sqlite:///mlflow.db \
+--host 0.0.0.0 \   # beacsue its on docker now 
+--port 7001
+
+mlflow server \
+--backend-store-uri sqlite:///mlflow.db \
+--host 0.0.0.0 \
+--port 7001 \
+--allowed-hosts "host.docker.internal,host.docker.internal:7001"
+
+mlflow server \
+--backend-store-uri sqlite:///mlflow.db \
+--host 0.0.0.0 \
+--port 7001 \
+--allowed-hosts "localhost,localhost:7001,127.0.0.1,127.0.0.1:7001,host.docker.internal,host.docker.internal:7001"
+
+mlflow server `
+  --backend-store-uri sqlite:///mlflow.db `
+  --host 0.0.0.0 `
+  --port 7001
+  
+Build Docker image again
+docker build -t iris-ml-api:v2 .
+
+Start the container and test API
+docker run -d --name iris-ml-api-container -p 8000:8000 -e MLFLOW_TRACKING_URI=http://host.docker.internal:7001 iris-ml-api:v2
+
+Restart docker container
+docker restart iris-ml-api-container
+docker start iris-ml-api-container
+docker ps -a
+
+Automatically build and publish docker imager images using GHCR
+Methos 1 - GHCR-GitHub conatiner Registry
+Method 2 - AWS
+
+M1:
+pull request to main - tests run + image built ( image not published)
+push to main - Test run + Image built + Publish Image 
+(chnages in github -> settings -> actions -> general -> workflow permissions -> read n write permissions)
+(chnages in ci.yml)

@@ -1,13 +1,34 @@
 #Import TestClient so we can send simulated HTTP requests directly to FASTAPI
 
+from fastapi import testclient
 from fastapi.testclient import TestClient 
 #import the application object defined in main.py
-from main import app
-
+# from main import app
+from main import create_app
+import pytest
 #create a reusable test client for all test function
-client = TestClient(app)
+# client = TestClient(app)
 
-def test_health_endpoint():
+class FakeIrisModel:
+    def predict(self, features):
+        #return a fixed prediction for testing purposes
+        return [0]  # always predict "setosa"
+def fake_model_loader():
+    return FakeIrisModel()
+def fake_version_loader():
+    return "test-version"
+
+@pytest.fixture
+def client():
+    #create a test client with the fake model loader
+    app = create_app(
+        model_loader=fake_model_loader,
+        version_loader=fake_version_loader
+        )
+    with TestClient(app) as test_client:
+        yield test_client
+
+def test_health_endpoint(client):
     """
     Verify that the application is running and can respond to a health-check request
     """
@@ -17,7 +38,7 @@ def test_health_endpoint():
     #now check rsponse body
     assert response.json() == {"status": "health"}
 
-def test_valid_iris_prediction():
+def test_valid_iris_prediction(client):
     """
     Verify that valid flower measurements produce a prediction
     """
@@ -41,7 +62,7 @@ def test_valid_iris_prediction():
     assert result["class_name"] in ["setosa", "versicolor", "virginica"]
     assert result["prediction"] in [0,1,2]
 
-def test_invalid_iris_input():
+def test_invalid_iris_input(client):
      payload = {
             "sepal_length": -3.4,
             "sepal_width": 1.4,

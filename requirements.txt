@@ -1,5 +1,5 @@
 scikit-learn 
-joblib #(files save and read)
+joblib #(files save and read and load model from local)
 fastapi
 uvicorn #(initiate server)
 pydantic #(validation testing instead of writing if-else)
