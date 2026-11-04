@@ -3,6 +3,6 @@ joblib #(files save and read and load model from local)
 fastapi
 uvicorn #(initiate server)
 pydantic #(validation testing instead of writing if-else)
-httpx
+httpx2
 pytest
 mlflow
