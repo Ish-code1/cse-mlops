@@ -1,4 +1,3 @@
-
 name: Iris ML API - CI Pipeline - CSE
 
 on:
@@ -10,7 +9,6 @@ on:
     branches:
       - main
 
-# Default permissions
 permissions:
   contents: read
 
@@ -44,10 +42,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
 
-    # Publish only on pushes to main
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    # Required for GitHub OIDC authentication
     permissions:
       contents: read
       id-token: write
@@ -55,29 +51,28 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      # TEMPORARY: remove after debugging
       - name: Debug OIDC claims
         run: |
           T=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
           P=$(echo "$T" | cut -d. -f2 | tr '_-' '/+')
           while [ $(( ${#P} % 4 )) -ne 0 ]; do P="$P="; done
           echo "$P" | base64 -d | jq '{sub, aud, repository, ref}'
-      # AWS authentication using OIDC
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Setup Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Generate image tags
       - name: Generate image tags
         id: meta
         uses: docker/metadata-action@v5
@@ -87,7 +82,6 @@ jobs:
             type=raw,value=latest
             type=sha,format=short
 
-      # Build and push Docker image
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
