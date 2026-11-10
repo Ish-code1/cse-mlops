@@ -1,7 +1,6 @@
 
 name: Iris ML API - CI Pipeline - CSE
 
-# Define when GitHub should run this workflow.
 on:
   push:
     branches:
@@ -11,10 +10,13 @@ on:
     branches:
       - main
 
-# Define the jobs that make up the pipeline
+# Default permissions
+permissions:
+  contents: read
+
 jobs:
 
-  # JOB-1: Test (UNCHANGED)
+  # JOB-1: Test
   test:
     name: Run API Tests
     runs-on: ubuntu-latest
@@ -36,16 +38,16 @@ jobs:
       - name: Run automated tests
         run: python -m pytest -v
 
-  # JOB-2: Build and Publish Docker Image to Amazon ECR
+  # JOB-2: Build and Publish to Amazon ECR
   build-and-push:
     name: Build and Publish to Amazon ECR
     needs: test
     runs-on: ubuntu-latest
 
-    # Publish only after a successful push to main (not on pull requests).
+    # Publish only on pushes to main
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    # Permissions required for AWS OIDC authentication.
+    # Required for GitHub OIDC authentication
     permissions:
       contents: read
       id-token: write
@@ -54,22 +56,23 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # Authenticate with AWS using GitHub OIDC.
+      # AWS authentication using OIDC
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Login to Amazon ECR.
+      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # Setup Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Generate image tags.
+      # Generate image tags
       - name: Generate image tags
         id: meta
         uses: docker/metadata-action@v5
@@ -79,7 +82,7 @@ jobs:
             type=raw,value=latest
             type=sha,format=short
 
-      # Build and push Docker image to Amazon ECR.
+      # Build and push Docker image
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -87,6 +90,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
 
 
 # name: Iris ML API - CI Pipeline - CSE
@@ -137,7 +141,7 @@ jobs:
 #       - name: Run automated tests
 #         run: python -m pytest -v
       
-          
+        
 #   # JOB-2: Build and Publish Docker Image
 #   build-and-publish:
 #     name: Build and Publish Docker Image
