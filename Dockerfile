@@ -15,5 +15,5 @@ EXPOSE 8000
 
 #start the api server when the container launches
 #0.0.0.0 allows the connection through containers 
-
+COPY model/ /app/model/
 CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8000"]
