@@ -57,13 +57,18 @@ def create_app(
 
         # Previous version always queried MLflow for the version.
         # Reason: use the injected loader during tests and MLflow in production.
+        # if version_loader is None:
+        #     client = mlflow.MlflowClient(tracking_uri=MLFLOW_TRACKING_URI)
+        #     champion_version = client.get_model_version_by_alias(
+        #         name="iris-classifier",
+        #         alias="champion",
+        #     )
+        #     app.state.model_version = champion_version.version
+        # else:
+        #     app.state.model_version = version_loader()
+
         if version_loader is None:
-            client = mlflow.MlflowClient(tracking_uri=MLFLOW_TRACKING_URI)
-            champion_version = client.get_model_version_by_alias(
-                name="iris-classifier",
-                alias="champion",
-            )
-            app.state.model_version = champion_version.version
+            app.state.model_version = os.getenv("MODEL_VERSION", "bundled")
         else:
             app.state.model_version = version_loader()
 
